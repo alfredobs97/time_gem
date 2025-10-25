@@ -6,21 +6,24 @@ This document outlines the phased implementation plan for the `time_gem` applica
 
 ### Phase 1: Project Setup and Initial Commit
 
-- [ ] Update the `pubspec.yaml` file:
+- [x] Create a new empty Flutter project named `time_gem` in the `/Users/alfredo/Documents/time_gem` directory.
+- [x] Remove any boilerplate code or files that will be replaced by the onboarding implementation, including the `test` directory.
+- [x] Update the `pubspec.yaml` file:
     - Set the `description` to "A time management app with AI-powered task scheduling and calendar integration."
     - Set the `version` to `0.1.0`.
     - Add `flutter_bloc`, `bloc`, `google_sign_in`, `googleapis`, `sqflite` as dependencies.
-- [ ] Update the `README.md` file with a short placeholder description: "time_gem: Your intelligent time management companion."
-- [ ] Create a `CHANGELOG.md` file with the initial version `0.1.0` and a brief entry.
-- [ ] Commit this initial, empty version of the package to the `main` branch with a suitable commit message.
-- [ ] After committing, start the app using the `launch_app` tool on the user's preferred device.
+- [x] Update the `README.md` file with a short placeholder description: "time_gem: Your intelligent time management companion."
+- [x] Create a `CHANGELOG.md` file with the initial version `0.1.0` and a brief entry.
+- [x] Commit this initial, empty version of the package to the `main` branch with a suitable commit message.
+- [x] After committing, start the app using the `launch_app` tool on the user's preferred device.
 
-### Phase 2: Implement Onboarding UI (Welcome Screen)
+### Phase 2: Implement Onboarding UI
 
-- [ ] Create the `WelcomeScreen` widget.
-- [ ] Design the UI for the `WelcomeScreen` to introduce the app's purpose.
-- [ ] Add navigation to the `CalendarIntegrationScreen`.
-- [ ] Create unit tests for the `WelcomeScreen` (if applicable, e.g., for any simple logic).
+- [x] Create the `WelcomeScreen` widget.
+- [x] Create the `AppGoalScreen` widget to explain the app's purpose.
+- [x] Design the UI for the onboarding screens.
+- [x] Add navigation between `WelcomeScreen`, `AppGoalScreen`, and `CalendarIntegrationScreen`.
+- [ ] Create unit tests for the onboarding screens (if applicable).
 
 ### Phase 3: Implement Onboarding UI (Calendar Integration Screen)
 
@@ -46,16 +49,16 @@ This document outlines the phased implementation plan for the `time_gem` applica
 
 ### Phase 6: Integrate BLoC with UI
 
-- [ ] Connect the `CalendarBloc` to the `WelcomeScreen` and `CalendarIntegrationScreen` using `BlocProvider` and `BlocBuilder`.
+- [ ] Connect the `CalendarBloc` to the onboarding screens using `BlocProvider` and `BlocBuilder`.
 - [ ] Update the UI to react to states emitted by the `CalendarBloc` (e.g., loading, authenticated, error).
 - [ ] Ensure proper navigation based on the calendar integration status.
 - [ ] Create widget tests for the integrated onboarding flow.
 
 ### Phase 7: Finalization and Documentation
 
-- [ ] Create a comprehensive `README.md` file for the package, detailing its purpose, features, and how to run it.
-- [ ] Create a `GEMINI.md` file in the project directory that describes the app, its purpose, and implementation details of the application and the layout of the files.
-- [ ] Ask the user to inspect the app and the code and say if they are satisfied with it, or if any modifications are needed.
+- [ ] Create a comprehensive `README.md` file for the package.
+- [ ] Create a `GEMINI.md` file in the project directory.
+- [ ] Ask the user for final review.
 
 ## Post-Phase Checklist
 
@@ -74,4 +77,40 @@ After completing each phase:
 
 ## Journal
 
-This section will be updated after each phase with a log of actions taken, things learned, surprises, and deviations from the plan. It will be in chronological order.
+### Phase 1: Project Setup and Initial Commit
+
+**Actions Taken:**
+- Created an empty Flutter project using `fvm exec flutter create --empty .`.
+- Removed the `test` directory.
+- Updated `pubspec.yaml` with description, version, and dependencies.
+- Updated `README.md` and created `CHANGELOG.md`.
+- Initialized Git repository and committed changes.
+- User confirmed the app is running.
+
+**Learnings:**
+- Resolved a Dart SDK version mismatch using FVM.
+
+**Surprises:**
+- The project was not a Git repository initially.
+
+**Deviations from Plan:**
+- None.
+
+### Phase 2: Implement Onboarding UI
+
+**Actions Taken:**
+- Created `lib/welcome_screen.dart`.
+- Created `lib/app_goal_screen.dart` to explain the app's purpose, as requested by the user.
+- Created `lib/calendar_integration_screen.dart`.
+- Implemented the UI for the onboarding screens.
+- Updated navigation flow: `WelcomeScreen` -> `AppGoalScreen` -> `CalendarIntegrationScreen`.
+
+**Learnings:**
+- Adapting the plan to include an extra screen is straightforward.
+
+**Surprises:**
+- None.
+
+**Deviations from Plan:**
+- Added an `AppGoalScreen` to the onboarding flow based on user feedback.
+- Skipped `fvm exec flutter analyze` as requested by the user.
