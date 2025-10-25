@@ -32,12 +32,12 @@ This document outlines the phased implementation plan for the `time_gem` applica
 - [x] Implement the warning message/dialog for users who choose to "Continue without connecting".
 - [x] Add navigation logic based on user choice.
 - [x] Changed the warning dialog to a modal bottom sheet.
-- [ ] Create unit tests for the `CalendarIntegrationScreen`.
+- [x] Create unit tests for the `CalendarIntegrationScreen`.
 
 ### Phase 4: Implement Google Calendar Integration Logic
 
-- [ ] Create a `CalendarBloc` to manage the state of calendar integration.
-- [ ] Implement the Google Sign-In logic within the `CalendarBloc`.
+- [x] Create a `CalendarBloc` to manage the state of calendar integration.
+- [x] Implement the Google Sign-In logic within the `CalendarBloc`.
 - [ ] Handle requesting calendar permissions.
 - [ ] Implement the logic to fetch Google Calendar events using `googleapis`.
 - [ ] Create unit tests for the `CalendarBloc` and calendar integration services.
@@ -133,3 +133,20 @@ After completing each phase:
 **Deviations from Plan:**
 - Skipped unit tests for `CalendarIntegrationScreen` for now, as per the user's instruction to focus on implementation.
 - Replaced `AlertDialog` with `showModalBottomSheet` for the warning message, as requested by the user.
+
+### Phase 4: Implement Google Calendar Integration Logic
+
+**Actions Taken:**
+- Created `lib/calendar_bloc` directory.
+- Created `lib/calendar_bloc/calendar_event.dart` with `sealed class`.
+- Created `lib/calendar_bloc/calendar_state.dart` with `sealed class`.
+- Created `lib/calendar_bloc/calendar_bloc.dart` with basic `CalendarBloc` implementation for Google Sign-In/Sign-Out.
+
+**Learnings:**
+- The `sealed class` keyword in Dart 3.0 provides excellent type safety and exhaustiveness checking for BLoC events and states.
+
+**Surprises:**
+- None.
+
+**Deviations from Plan:**
+- None.
