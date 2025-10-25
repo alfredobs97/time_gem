@@ -1,6 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:googleapis/calendar/v3.dart' as google_calendar;
+import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
 
 part 'calendar_event.dart';
 part 'calendar_state.dart';
@@ -13,6 +15,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         super(CalendarInitial()) {
     on<SignInWithGoogleRequested>(_onSignInWithGoogleRequested);
     on<SignOutRequested>(_onSignOutRequested);
+    on<FetchCalendarEvents>(_onFetchCalendarEvents);
   }
 
   Future<void> _onSignInWithGoogleRequested(
@@ -21,9 +24,8 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   ) async {
     emit(CalendarLoading());
     try {
-      // Requesting calendar scopes
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
+
       if (googleUser != null) {
         final hasPermissions = await _googleSignIn.requestScopes([
           'https://www.googleapis.com/auth/calendar.readonly',
@@ -33,7 +35,6 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         if (hasPermissions) {
           emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
         } else {
-          // Handle case where user denies permissions
           await _googleSignIn.signOut();
           emit(CalendarError(message: 'Calendar permissions were not granted.'));
         }
@@ -55,6 +56,28 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       emit(CalendarInitial());
     } catch (e) {
       emit(CalendarError(message: 'Google Sign-Out failed: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onFetchCalendarEvents(
+    FetchCalendarEvents event,
+    Emitter<CalendarState> emit,
+  ) async {
+    emit(CalendarLoading());
+    try {
+      final authClient = await _googleSignIn.authenticatedClient();
+      if (authClient == null) {
+        emit(CalendarError(message: 'Authentication failed.'));
+        return;
+      }
+
+      final calendarApi = google_calendar.CalendarApi(authClient);
+      final events = await calendarApi.events.list('primary');
+      final eventSummaries =
+          events.items?.map((e) => e.summary ?? 'No Title').toList() ?? [];
+      emit(CalendarEventsLoaded(events: eventSummaries));
+    } catch (e) {
+      emit(CalendarError(message: 'Failed to fetch calendar events: ${e.toString()}'));
     }
   }
 }

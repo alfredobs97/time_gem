@@ -21,6 +21,21 @@ class CalendarAuthenticated extends CalendarState {
   int get hashCode => userName.hashCode;
 }
 
+class CalendarEventsLoaded extends CalendarState {
+  final List<String> events;
+
+  CalendarEventsLoaded({required this.events});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CalendarEventsLoaded &&
+          listEquals(other.events, events));
+
+  @override
+  int get hashCode => events.hashCode;
+}
+
 class CalendarError extends CalendarState {
   final String message;
 

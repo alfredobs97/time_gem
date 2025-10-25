@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
 import 'package:time_gem/main_app_screen.dart';
+import 'package:time_gem/welcome_screen.dart';
 
 class CalendarIntegrationScreen extends StatelessWidget {
   const CalendarIntegrationScreen({super.key});
@@ -79,6 +80,12 @@ class CalendarIntegrationScreen extends StatelessWidget {
                 content: Text(state.message),
                 backgroundColor: Colors.red,
               ),
+            );
+          } else if (state is CalendarInitial) {
+            // After signing out, navigate back to the welcome screen
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+              (Route<dynamic> route) => false,
             );
           }
         },

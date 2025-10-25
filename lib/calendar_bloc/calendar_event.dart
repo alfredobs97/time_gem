@@ -6,3 +6,5 @@ sealed class CalendarEvent {}
 class SignInWithGoogleRequested extends CalendarEvent {}
 
 class SignOutRequested extends CalendarEvent {}
+
+class FetchCalendarEvents extends CalendarEvent {}

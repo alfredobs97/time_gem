@@ -39,7 +39,7 @@ This document outlines the phased implementation plan for the `time_gem` applica
 - [x] Create a `CalendarBloc` to manage the state of calendar integration.
 - [x] Implement the Google Sign-In logic within the `CalendarBloc`.
 - [x] Handle requesting calendar permissions.
-- [ ] Implement the logic to fetch Google Calendar events using `googleapis`.
+- [x] Implement the logic to fetch Google Calendar events using `googleapis`.
 - [ ] Create unit tests for the `CalendarBloc` and calendar integration services.
 
 ### Phase 5: Implement Local Calendar Logic
@@ -52,7 +52,7 @@ This document outlines the phased implementation plan for the `time_gem` applica
 
 - [x] Connect the `CalendarBloc` to the onboarding screens using `BlocProvider` and `BlocBuilder`.
 - [x] Update the UI to react to states emitted by the `CalendarBloc` (e.g., loading, authenticated, error).
-- [ ] Ensure proper navigation based on the calendar integration status.
+- [x] Ensure proper navigation based on the calendar integration status.
 - [ ] Create widget tests for the integrated onboarding flow.
 
 ### Phase 7: Finalization and Documentation
@@ -142,9 +142,14 @@ After completing each phase:
 - Created `lib/calendar_bloc/calendar_state.dart` with `sealed class`.
 - Created `lib/calendar_bloc/calendar_bloc.dart` with basic `CalendarBloc` implementation for Google Sign-In/Sign-Out.
 - Updated `CalendarBloc` to request calendar permissions.
+- Added `FetchCalendarEvents` event and `CalendarEventsLoaded` state.
+- Implemented logic to fetch calendar events from the Google Calendar API.
+- Updated `MainAppScreen` to display fetched events and trigger fetching.
+- Updated `CalendarIntegrationScreen` to handle sign-out navigation.
 
 **Learnings:**
 - The `sealed class` keyword in Dart 3.0 provides excellent type safety and exhaustiveness checking for BLoC events and states.
+- Using an extension on `GoogleSignIn` can simplify the process of getting an authenticated client for `googleapis`.
 
 **Surprises:**
 - None.
