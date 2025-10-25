@@ -23,14 +23,15 @@ This document outlines the phased implementation plan for the `time_gem` applica
 - [x] Create the `AppGoalScreen` widget to explain the app's purpose.
 - [x] Design the UI for the onboarding screens.
 - [x] Add navigation between `WelcomeScreen`, `AppGoalScreen`, and `CalendarIntegrationScreen`.
-- [ ] Create unit tests for the onboarding screens (if applicable).
+- [x] Create unit tests for the onboarding screens (if applicable).
 
 ### Phase 3: Implement Onboarding UI (Calendar Integration Screen)
 
-- [ ] Create the `CalendarIntegrationScreen` widget.
-- [ ] Design the UI for the `CalendarIntegrationScreen` with options to "Connect Google Calendar" and "Continue without connecting".
-- [ ] Implement the warning message/dialog for users who choose to "Continue without connecting".
-- [ ] Add navigation logic based on user choice.
+- [x] Create the `CalendarIntegrationScreen` widget.
+- [x] Design the UI for the `CalendarIntegrationScreen` with options to "Connect Google Calendar" and "Continue without connecting".
+- [x] Implement the warning message/dialog for users who choose to "Continue without connecting".
+- [x] Add navigation logic based on user choice.
+- [x] Changed the warning dialog to a modal bottom sheet.
 - [ ] Create unit tests for the `CalendarIntegrationScreen`.
 
 ### Phase 4: Implement Google Calendar Integration Logic
@@ -114,3 +115,21 @@ After completing each phase:
 **Deviations from Plan:**
 - Added an `AppGoalScreen` to the onboarding flow based on user feedback.
 - Skipped `fvm exec flutter analyze` as requested by the user.
+
+### Phase 3: Implement Onboarding UI (Calendar Integration Screen)
+
+**Actions Taken:**
+- Created `lib/main_app_screen.dart` as a placeholder for the main application screen.
+- Updated `lib/calendar_integration_screen.dart` to include a warning dialog for local calendar usage and navigation to `MainAppScreen`.
+- Changed the warning dialog to a modal bottom sheet for a better user experience.
+
+**Learnings:**
+- Implementing a dialog for user choice provides a clear user experience for calendar integration.
+- Modal bottom sheets offer a more modern and less intrusive way to present contextual information and choices to the user compared to traditional dialogs.
+
+**Surprises:**
+- None.
+
+**Deviations from Plan:**
+- Skipped unit tests for `CalendarIntegrationScreen` for now, as per the user's instruction to focus on implementation.
+- Replaced `AlertDialog` with `showModalBottomSheet` for the warning message, as requested by the user.
