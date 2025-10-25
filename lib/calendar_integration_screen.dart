@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
 import 'package:time_gem/main_app_screen.dart';
 
 class CalendarIntegrationScreen extends StatelessWidget {
@@ -63,32 +65,54 @@ class CalendarIntegrationScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Connect Your Calendar'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'Integrate with Google Calendar for the best experience.',
-              style: TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
+      body: BlocConsumer<CalendarBloc, CalendarState>(
+        listener: (context, state) {
+          if (state is CalendarAuthenticated) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const MainAppScreen(),
+              ),
+            );
+          } else if (state is CalendarError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is CalendarLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'Integrate with Google Calendar for the best experience.',
+                  style: TextStyle(fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<CalendarBloc>().add(SignInWithGoogleRequested());
+                  },
+                  child: const Text('Connect Google Calendar'),
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () {
+                    _showLocalCalendarWarning(context);
+                  },
+                  child: const Text('Continue without connecting'),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Implement Google Calendar connection logic
-                print('Connect Google Calendar');
-              },
-              child: const Text('Connect Google Calendar'),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                _showLocalCalendarWarning(context);
-              },
-              child: const Text('Continue without connecting'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

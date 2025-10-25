@@ -8,7 +8,7 @@ part 'calendar_state.dart';
 class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   final GoogleSignIn _googleSignIn;
 
-  CalendarBloc({required GoogleSignIn googleSignIn}) 
+  CalendarBloc({required GoogleSignIn googleSignIn})
       : _googleSignIn = googleSignIn,
         super(CalendarInitial()) {
     on<SignInWithGoogleRequested>(_onSignInWithGoogleRequested);
@@ -21,9 +21,22 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   ) async {
     emit(CalendarLoading());
     try {
+      // Requesting calendar scopes
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
       if (googleUser != null) {
-        emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
+        final hasPermissions = await _googleSignIn.requestScopes([
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/calendar.events'
+        ]);
+
+        if (hasPermissions) {
+          emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
+        } else {
+          // Handle case where user denies permissions
+          await _googleSignIn.signOut();
+          emit(CalendarError(message: 'Calendar permissions were not granted.'));
+        }
       } else {
         emit(CalendarError(message: 'Google Sign-In aborted by user.'));
       }

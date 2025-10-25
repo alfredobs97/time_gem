@@ -38,7 +38,7 @@ This document outlines the phased implementation plan for the `time_gem` applica
 
 - [x] Create a `CalendarBloc` to manage the state of calendar integration.
 - [x] Implement the Google Sign-In logic within the `CalendarBloc`.
-- [ ] Handle requesting calendar permissions.
+- [x] Handle requesting calendar permissions.
 - [ ] Implement the logic to fetch Google Calendar events using `googleapis`.
 - [ ] Create unit tests for the `CalendarBloc` and calendar integration services.
 
@@ -50,8 +50,8 @@ This document outlines the phased implementation plan for the `time_gem` applica
 
 ### Phase 6: Integrate BLoC with UI
 
-- [ ] Connect the `CalendarBloc` to the onboarding screens using `BlocProvider` and `BlocBuilder`.
-- [ ] Update the UI to react to states emitted by the `CalendarBloc` (e.g., loading, authenticated, error).
+- [x] Connect the `CalendarBloc` to the onboarding screens using `BlocProvider` and `BlocBuilder`.
+- [x] Update the UI to react to states emitted by the `CalendarBloc` (e.g., loading, authenticated, error).
 - [ ] Ensure proper navigation based on the calendar integration status.
 - [ ] Create widget tests for the integrated onboarding flow.
 
@@ -141,9 +141,25 @@ After completing each phase:
 - Created `lib/calendar_bloc/calendar_event.dart` with `sealed class`.
 - Created `lib/calendar_bloc/calendar_state.dart` with `sealed class`.
 - Created `lib/calendar_bloc/calendar_bloc.dart` with basic `CalendarBloc` implementation for Google Sign-In/Sign-Out.
+- Updated `CalendarBloc` to request calendar permissions.
 
 **Learnings:**
 - The `sealed class` keyword in Dart 3.0 provides excellent type safety and exhaustiveness checking for BLoC events and states.
+
+**Surprises:**
+- None.
+
+**Deviations from Plan:**
+- None.
+
+### Phase 6: Integrate BLoC with UI
+
+**Actions Taken:**
+- Provided the `CalendarBloc` to the widget tree in `main.dart` using `BlocProvider`.
+- Updated `CalendarIntegrationScreen` to use `BlocConsumer` to dispatch events and react to state changes from the `CalendarBloc`.
+
+**Learnings:**
+- `BlocConsumer` is a powerful widget for handling both UI building and side-effects (like navigation or showing snackbars) in response to BLoC state changes.
 
 **Surprises:**
 - None.
