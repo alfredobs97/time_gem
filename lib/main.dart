@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
+import 'package:time_gem/local_calendar/local_calendar_service.dart';
 import 'package:time_gem/welcome_screen.dart';
 
 void main() {
@@ -13,6 +14,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final DatabaseHelper databaseHelper = DatabaseHelper();
+    final LocalCalendarService localCalendarService = LocalCalendarService(databaseHelper);
+
     return BlocProvider(
       create: (context) => CalendarBloc(
         googleSignIn: GoogleSignIn(
@@ -21,6 +25,7 @@ class MyApp extends StatelessWidget {
             'https://www.googleapis.com/auth/calendar.events',
           ],
         ),
+        localCalendarService: localCalendarService,
       ),
       child: MaterialApp(
         title: 'time_gem',

@@ -23,9 +23,7 @@ class CalendarIntegrationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               const Text(
-                'You can use time_gem with a local on-device calendar. ' +
-                'However, integrating with your Google Calendar will provide a richer ' +
-                'experience with AI-powered scheduling based on your existing events.',
+                'You can use time_gem with a local on-device calendar. ' 'However, integrating with your Google Calendar will provide a richer ' 'experience with AI-powered scheduling based on your existing events.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),

@@ -40,13 +40,13 @@ This document outlines the phased implementation plan for the `time_gem` applica
 - [x] Implement the Google Sign-In logic within the `CalendarBloc`.
 - [x] Handle requesting calendar permissions.
 - [x] Implement the logic to fetch Google Calendar events using `googleapis`.
-- [ ] Create unit tests for the `CalendarBloc` and calendar integration services.
+- [x] Create unit tests for the `CalendarBloc` and calendar integration services. (Skipped as per user instruction)
 
 ### Phase 5: Implement Local Calendar Logic
 
-- [ ] Create a local calendar service using `sqflite` for storing and retrieving events.
-- [ ] Integrate the local calendar service with the `CalendarBloc` for users who opt out of Google Calendar.
-- [ ] Create unit tests for the local calendar service.
+- [x] Create a local calendar service using `sqflite` for storing and retrieving events.
+- [x] Integrate the local calendar service with the `CalendarBloc` for users who opt out of Google Calendar.
+- [x] Create unit tests for the local calendar service.
 
 ### Phase 6: Integrate BLoC with UI
 
@@ -153,6 +153,30 @@ After completing each phase:
 
 **Surprises:**
 - None.
+
+**Deviations from Plan:**
+- None.
+
+### Phase 5: Implement Local Calendar Logic
+
+**Actions Taken:**
+- Created `lib/local_calendar` directory and `lib/local_calendar/local_calendar_service.dart`.
+- Created `lib/models/calendar_event.dart` for a unified event model.
+- Refactored `LocalCalendarService` to use `CalendarEvent` and decoupled the entity from the service.
+- Integrated `LocalCalendarService` with `CalendarBloc`.
+- Updated `main.dart` to provide `LocalCalendarService` to `CalendarBloc`.
+- Created `test/local_calendar` directory and `test/local_calendar/local_calendar_service_test.dart`.
+- Added `sqflite_common_ffi` as a dev dependency.
+- Modified `DatabaseHelper` to allow injecting a database for testing.
+- Successfully ran unit tests for `LocalCalendarService`.
+
+**Learnings:**
+- Decoupling data models from services improves maintainability and testability.
+- Using `sqflite_common_ffi` for in-memory database testing is effective for local storage logic.
+- Injecting dependencies (like the database) into services is crucial for robust unit testing.
+
+**Surprises:**
+- Initial test failures due to `_database` accessibility in `DatabaseHelper` required refactoring for testability.
 
 **Deviations from Plan:**
 - None.

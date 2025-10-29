@@ -29,14 +29,16 @@ class MainAppScreen extends StatelessWidget {
               itemCount: state.events.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(state.events[index]),
+                  title: Text(state.events[index].title),
+                  subtitle: Text(
+                      '${state.events[index].start.toLocal()} - ${state.events[index].end.toLocal()}'),
                 );
               },
             );
           } else if (state is CalendarAuthenticated) {
             return Center(
               child: Column(
-                mainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text('Welcome, ${state.userName}!'),
                   const SizedBox(height: 20),
@@ -45,6 +47,22 @@ class MainAppScreen extends StatelessWidget {
                       context.read<CalendarBloc>().add(FetchCalendarEvents());
                     },
                     child: const Text('Fetch Calendar Events'),
+                  ),
+                ],
+              ),
+            );
+          } else if (state is CalendarUnauthenticated) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('You are not authenticated.'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Optionally navigate back to the integration screen or show a sign-in button
+                    },
+                    child: const Text('Sign In'),
                   ),
                 ],
               ),

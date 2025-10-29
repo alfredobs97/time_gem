@@ -3,19 +3,31 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as google_calendar;
 import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
+import 'package:time_gem/local_calendar/local_calendar_service.dart';
+import 'package:time_gem/models/calendar_event_model.dart' as model_event;
 
 part 'calendar_event.dart';
 part 'calendar_state.dart';
 
 class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   final GoogleSignIn _googleSignIn;
+  final LocalCalendarService? localCalendarService;
+  google_calendar.CalendarApi? _calendarApi;
 
-  CalendarBloc({required GoogleSignIn googleSignIn})
+  CalendarBloc({
+    required GoogleSignIn googleSignIn,
+    this.localCalendarService,
+    google_calendar.CalendarApi? calendarApi,
+  })
       : _googleSignIn = googleSignIn,
+        _calendarApi = calendarApi,
         super(CalendarInitial()) {
     on<SignInWithGoogleRequested>(_onSignInWithGoogleRequested);
     on<SignOutRequested>(_onSignOutRequested);
     on<FetchCalendarEvents>(_onFetchCalendarEvents);
+    on<AddLocalEvent>(_onAddLocalEvent);
+    on<DeleteLocalEvent>(_onOnDeleteLocalEvent);
+    on<FetchLocalEvents>(_onFetchLocalEvents);
   }
 
   Future<void> _onSignInWithGoogleRequested(
@@ -33,6 +45,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         ]);
 
         if (hasPermissions) {
+          _calendarApi = google_calendar.CalendarApi(await googleUser.toAuthClient());
           emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
         } else {
           await _googleSignIn.signOut();
@@ -41,7 +54,8 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       } else {
         emit(CalendarError(message: 'Google Sign-In aborted by user.'));
       }
-    } catch (e) {
+    }
+    catch (e) {
       emit(CalendarError(message: 'Google Sign-In failed: ${e.toString()}'));
     }
   }
@@ -53,8 +67,10 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     emit(CalendarLoading());
     try {
       await _googleSignIn.signOut();
-      emit(CalendarInitial());
-    } catch (e) {
+      _calendarApi = null;
+      emit(CalendarUnauthenticated());
+    }
+    catch (e) {
       emit(CalendarError(message: 'Google Sign-Out failed: ${e.toString()}'));
     }
   }
@@ -65,19 +81,76 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   ) async {
     emit(CalendarLoading());
     try {
-      final authClient = await _googleSignIn.authenticatedClient();
-      if (authClient == null) {
-        emit(CalendarError(message: 'Authentication failed.'));
-        return;
+      if (_googleSignIn.currentUser != null && _calendarApi != null) {
+        final events = await _calendarApi!.events.list('primary');
+        final calendarEvents = events.items?.map((e) => model_event.CalendarEventModel(
+              id: e.id ?? '',
+              title: e.summary ?? 'No Title',
+              start: e.start?.dateTime ?? DateTime.now(),
+              end: e.end?.dateTime ?? DateTime.now(),
+            )).toList() ?? [];
+        emit(CalendarEventsLoaded(events: calendarEvents));
+      } else if (localCalendarService != null) {
+        final localEvents = await localCalendarService!.getEvents();
+        emit(CalendarEventsLoaded(events: localEvents));
+      } else {
+        emit(CalendarError(message: 'No calendar service available.'));
       }
-
-      final calendarApi = google_calendar.CalendarApi(authClient);
-      final events = await calendarApi.events.list('primary');
-      final eventSummaries =
-          events.items?.map((e) => e.summary ?? 'No Title').toList() ?? [];
-      emit(CalendarEventsLoaded(events: eventSummaries));
-    } catch (e) {
+    }
+    catch (e) {
       emit(CalendarError(message: 'Failed to fetch calendar events: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onAddLocalEvent(
+    AddLocalEvent event,
+    Emitter<CalendarState> emit,
+  ) async {
+    if (localCalendarService == null) {
+      emit(CalendarError(message: 'Local calendar service not available.'));
+      return;
+    }
+    try {
+      await localCalendarService!.insertEvent(event.event);
+      add(FetchLocalEvents()); // Refresh local events after adding
+    }
+    catch (e) {
+      emit(CalendarError(message: 'Failed to add local event: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onOnDeleteLocalEvent(
+    DeleteLocalEvent event,
+    Emitter<CalendarState> emit,
+  ) async {
+    if (localCalendarService == null) {
+      emit(CalendarError(message: 'Local calendar service not available.'));
+      return;
+    }
+    try {
+      await localCalendarService!.deleteEvent(event.eventId);
+      add(FetchLocalEvents()); // Refresh local events after deleting
+    }
+    catch (e) {
+      emit(CalendarError(message: 'Failed to delete local event: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onFetchLocalEvents(
+    FetchLocalEvents event,
+    Emitter<CalendarState> emit,
+  ) async {
+    if (localCalendarService == null) {
+      emit(CalendarError(message: 'Local calendar service not available.'));
+      return;
+    }
+    emit(CalendarLoading());
+    try {
+      final localEvents = await localCalendarService!.getEvents();
+      emit(CalendarEventsLoaded(events: localEvents));
+    }
+    catch (e) {
+      emit(CalendarError(message: 'Failed to fetch local events: ${e.toString()}'));
     }
   }
 }
