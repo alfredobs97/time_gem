@@ -5,6 +5,7 @@ import 'package:googleapis/calendar/v3.dart' as google_calendar;
 import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:time_gem/local_calendar/local_calendar_service.dart';
 import 'package:time_gem/models/calendar_event_model.dart' as model_event;
+import 'package:firebase_auth/firebase_auth.dart';
 
 part 'calendar_event.dart';
 part 'calendar_state.dart';
@@ -18,8 +19,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     required GoogleSignIn googleSignIn,
     this.localCalendarService,
     google_calendar.CalendarApi? calendarApi,
-  })
-      : _googleSignIn = googleSignIn,
+  })  : _googleSignIn = googleSignIn,
         _calendarApi = calendarApi,
         super(CalendarInitial()) {
     on<SignInWithGoogleRequested>(_onSignInWithGoogleRequested);
@@ -38,24 +38,34 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      if (googleUser != null) {
-        final hasPermissions = await _googleSignIn.requestScopes([
-          'https://www.googleapis.com/auth/calendar.readonly',
-          'https://www.googleapis.com/auth/calendar.events'
-        ]);
-
-        if (hasPermissions) {
-          _calendarApi = google_calendar.CalendarApi(await googleUser.toAuthClient());
-          emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
-        } else {
-          await _googleSignIn.signOut();
-          emit(CalendarError(message: 'Calendar permissions were not granted.'));
-        }
-      } else {
-        emit(CalendarError(message: 'Google Sign-In aborted by user.'));
+      if (googleUser == null) {
+        emit(CalendarUnauthenticated());
+        return;
       }
-    }
-    catch (e) {
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      final hasPermissions = await _googleSignIn.requestScopes([
+        'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/calendar.events'
+      ]);
+
+      if (!hasPermissions) {
+        emit(CalendarError(message: 'Calendar permissions were not granted.'));
+        return;
+      }
+
+      _calendarApi =
+          google_calendar.CalendarApi(await googleUser.toAuthClient());
+      emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
+    } catch (e) {
       emit(CalendarError(message: 'Google Sign-In failed: ${e.toString()}'));
     }
   }
@@ -67,10 +77,10 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     emit(CalendarLoading());
     try {
       await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
       _calendarApi = null;
       emit(CalendarUnauthenticated());
-    }
-    catch (e) {
+    } catch (e) {
       emit(CalendarError(message: 'Google Sign-Out failed: ${e.toString()}'));
     }
   }
@@ -82,13 +92,26 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     emit(CalendarLoading());
     try {
       if (_googleSignIn.currentUser != null && _calendarApi != null) {
-        final events = await _calendarApi!.events.list('primary');
-        final calendarEvents = events.items?.map((e) => model_event.CalendarEventModel(
-              id: e.id ?? '',
-              title: e.summary ?? 'No Title',
-              start: e.start?.dateTime ?? DateTime.now(),
-              end: e.end?.dateTime ?? DateTime.now(),
-            )).toList() ?? [];
+        final now = DateTime.now();
+        final sevenDaysLater = now.add(const Duration(days: 7));
+
+        final events = await _calendarApi!.events.list(
+          'primary',
+          timeMin: now.toUtc(),
+          timeMax: sevenDaysLater.toUtc(),
+          singleEvents: true,
+          orderBy: 'startTime',
+        );
+
+        final calendarEvents = events.items
+                ?.map((e) => model_event.CalendarEventModel(
+                      id: e.id ?? '',
+                      title: e.summary ?? 'No Title',
+                      start: e.start?.dateTime ?? DateTime.now(),
+                      end: e.end?.dateTime ?? DateTime.now(),
+                    ))
+                .toList() ??
+            [];
         emit(CalendarEventsLoaded(events: calendarEvents));
       } else if (localCalendarService != null) {
         final localEvents = await localCalendarService!.getEvents();
@@ -96,9 +119,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       } else {
         emit(CalendarError(message: 'No calendar service available.'));
       }
-    }
-    catch (e) {
-      emit(CalendarError(message: 'Failed to fetch calendar events: ${e.toString()}'));
+    } catch (e) {
+      emit(CalendarError(
+          message: 'Failed to fetch calendar events: ${e.toString()}'));
     }
   }
 
@@ -113,9 +136,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     try {
       await localCalendarService!.insertEvent(event.event);
       add(FetchLocalEvents()); // Refresh local events after adding
-    }
-    catch (e) {
-      emit(CalendarError(message: 'Failed to add local event: ${e.toString()}'));
+    } catch (e) {
+      emit(
+          CalendarError(message: 'Failed to add local event: ${e.toString()}'));
     }
   }
 
@@ -130,9 +153,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     try {
       await localCalendarService!.deleteEvent(event.eventId);
       add(FetchLocalEvents()); // Refresh local events after deleting
-    }
-    catch (e) {
-      emit(CalendarError(message: 'Failed to delete local event: ${e.toString()}'));
+    } catch (e) {
+      emit(CalendarError(
+          message: 'Failed to delete local event: ${e.toString()}'));
     }
   }
 
@@ -148,9 +171,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     try {
       final localEvents = await localCalendarService!.getEvents();
       emit(CalendarEventsLoaded(events: localEvents));
-    }
-    catch (e) {
-      emit(CalendarError(message: 'Failed to fetch local events: ${e.toString()}'));
+    } catch (e) {
+      emit(CalendarError(
+          message: 'Failed to fetch local events: ${e.toString()}'));
     }
   }
 }
