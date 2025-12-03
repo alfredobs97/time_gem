@@ -5,7 +5,12 @@ import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
 import 'package:time_gem/local_calendar/local_calendar_service.dart';
 import 'package:time_gem/welcome_screen.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'package:time_gem/firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -14,8 +19,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DatabaseHelper databaseHelper = DatabaseHelper();
-    final LocalCalendarService localCalendarService = LocalCalendarService(databaseHelper);
+    final LocalCalendarService localCalendarService =
+        LocalCalendarService(DatabaseHelper());
 
     return BlocProvider(
       create: (context) => CalendarBloc(
