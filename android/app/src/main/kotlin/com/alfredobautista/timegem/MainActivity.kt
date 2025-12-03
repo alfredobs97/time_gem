@@ -1,4 +1,4 @@
-package com.example.time_gem
+package com.alfredobautista.timegem
 
 import io.flutter.embedding.android.FlutterActivity
 
