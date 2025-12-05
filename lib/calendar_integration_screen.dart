@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
-import 'package:time_gem/main_app_screen.dart';
-import 'package:time_gem/welcome_screen.dart';
+import 'package:time_gem/ui/screens/home/home_screen.dart';
+import 'package:time_gem/ui/screens/welcome/welcome_screen.dart';
 
 class CalendarIntegrationScreen extends StatelessWidget {
   const CalendarIntegrationScreen({super.key});
@@ -23,7 +23,9 @@ class CalendarIntegrationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 15),
               const Text(
-                'You can use time_gem with a local on-device calendar. ' 'However, integrating with your Google Calendar will provide a richer ' 'experience with AI-powered scheduling based on your existing events.',
+                'You can use time_gem with a local on-device calendar. '
+                'However, integrating with your Google Calendar will provide a richer '
+                'experience with AI-powered scheduling based on your existing events.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -34,7 +36,7 @@ class CalendarIntegrationScreen extends StatelessWidget {
                     Navigator.of(context).pop(); // Dismiss bottom sheet
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) => const MainAppScreen(),
+                        builder: (context) => const HomeScreen(),
                       ),
                     ); // Navigate to main app
                   },
@@ -69,7 +71,7 @@ class CalendarIntegrationScreen extends StatelessWidget {
           if (state is CalendarAuthenticated) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => const MainAppScreen(),
+                builder: (context) => const HomeScreen(),
               ),
             );
           } else if (state is CalendarError) {
@@ -103,7 +105,9 @@ class CalendarIntegrationScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    context.read<CalendarBloc>().add(SignInWithGoogleRequested());
+                    context
+                        .read<CalendarBloc>()
+                        .add(SignInWithGoogleRequested());
                   },
                   child: const Text('Connect Google Calendar'),
                 ),
