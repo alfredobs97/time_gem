@@ -6,6 +6,8 @@ import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_au
 import 'package:time_gem/local_calendar/local_calendar_service.dart';
 import 'package:time_gem/models/calendar_event_model.dart' as model_event;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import 'package:time_gem/services/task_service.dart';
 
 part 'calendar_event.dart';
 part 'calendar_state.dart';
@@ -13,13 +15,17 @@ part 'calendar_state.dart';
 class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   final GoogleSignIn _googleSignIn;
   final LocalCalendarService? localCalendarService;
+  final TaskService _taskService;
   google_calendar.CalendarApi? _calendarApi;
+  late StreamSubscription<void> _organizationCompleteSubscription;
 
   CalendarBloc({
     required GoogleSignIn googleSignIn,
+    required TaskService taskService,
     this.localCalendarService,
     google_calendar.CalendarApi? calendarApi,
   })  : _googleSignIn = googleSignIn,
+        _taskService = taskService,
         _calendarApi = calendarApi,
         super(CalendarInitial()) {
     on<SignInWithGoogleRequested>(_onSignInWithGoogleRequested);
@@ -28,6 +34,17 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     on<AddLocalEvent>(_onAddLocalEvent);
     on<DeleteLocalEvent>(_onOnDeleteLocalEvent);
     on<FetchLocalEvents>(_onFetchLocalEvents);
+
+    _organizationCompleteSubscription =
+        _taskService.organizationCompleteStream.listen((_) {
+      add(FetchCalendarEvents());
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _organizationCompleteSubscription.cancel();
+    return super.close();
   }
 
   Future<void> _onSignInWithGoogleRequested(
