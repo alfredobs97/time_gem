@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:time_gem/local_calendar/local_calendar_service.dart';
+import 'package:time_gem/data/services/local_calendar_service.dart';
 import 'package:time_gem/models/calendar_event_model.dart';
 
 void main() {

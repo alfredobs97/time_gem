@@ -4,7 +4,7 @@ import 'package:time_gem/data/services/google_calendar_service.dart';
 import 'package:time_gem/data/services/local_calendar_service.dart';
 import 'package:time_gem/models/calendar_event_model.dart' as model_event;
 import 'dart:async';
-import 'package:time_gem/services/task_service.dart';
+import 'package:time_gem/data/services/task_service.dart';
 
 part 'calendar_event.dart';
 part 'calendar_state.dart';

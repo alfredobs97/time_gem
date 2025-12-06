@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:time_gem/domain/services/ai_service.dart';
 import 'package:time_gem/models/task_model.dart';
 import 'package:time_gem/models/working_hours.dart';
-import 'package:time_gem/services/ai_service.dart';
 import 'package:time_gem/task_bloc/task_event.dart';
 import 'package:time_gem/task_bloc/task_state.dart';
 
 import 'dart:async';
-import 'package:time_gem/services/task_service.dart';
+import 'package:time_gem/data/services/task_service.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskService _taskService;
