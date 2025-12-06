@@ -1,11 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis/calendar/v3.dart' as google_calendar;
-import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
-import 'package:time_gem/local_calendar/local_calendar_service.dart';
+import 'package:time_gem/data/services/google_calendar_service.dart';
+import 'package:time_gem/data/services/local_calendar_service.dart';
 import 'package:time_gem/models/calendar_event_model.dart' as model_event;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'package:time_gem/services/task_service.dart';
 
@@ -13,20 +10,17 @@ part 'calendar_event.dart';
 part 'calendar_state.dart';
 
 class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
-  final GoogleSignIn _googleSignIn;
+  final GoogleCalendarService _googleCalendarRepository;
   final LocalCalendarService? localCalendarService;
   final TaskService _taskService;
-  google_calendar.CalendarApi? _calendarApi;
   late StreamSubscription<void> _organizationCompleteSubscription;
 
   CalendarBloc({
-    required GoogleSignIn googleSignIn,
+    required GoogleCalendarService googleCalendarRepository,
     required TaskService taskService,
     this.localCalendarService,
-    google_calendar.CalendarApi? calendarApi,
-  })  : _googleSignIn = googleSignIn,
+  })  : _googleCalendarRepository = googleCalendarRepository,
         _taskService = taskService,
-        _calendarApi = calendarApi,
         super(CalendarInitial()) {
     on<SignInWithGoogleRequested>(_onSignInWithGoogleRequested);
     on<SignOutRequested>(_onSignOutRequested);
@@ -53,34 +47,11 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   ) async {
     emit(CalendarLoading());
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
+      final googleUser = await _googleCalendarRepository.signIn();
       if (googleUser == null) {
         emit(CalendarUnauthenticated());
         return;
       }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-
-      final hasPermissions = await _googleSignIn.requestScopes([
-        'https://www.googleapis.com/auth/calendar.readonly',
-        'https://www.googleapis.com/auth/calendar.events'
-      ]);
-
-      if (!hasPermissions) {
-        emit(CalendarError(message: 'Calendar permissions were not granted.'));
-        return;
-      }
-
-      _calendarApi =
-          google_calendar.CalendarApi(await googleUser.toAuthClient());
       emit(CalendarAuthenticated(userName: googleUser.displayName ?? 'User'));
     } catch (e) {
       emit(CalendarError(message: 'Google Sign-In failed: ${e.toString()}'));
@@ -93,9 +64,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   ) async {
     emit(CalendarLoading());
     try {
-      await _googleSignIn.signOut();
-      await FirebaseAuth.instance.signOut();
-      _calendarApi = null;
+      await _googleCalendarRepository.signOut();
       emit(CalendarUnauthenticated());
     } catch (e) {
       emit(CalendarError(message: 'Google Sign-Out failed: ${e.toString()}'));
@@ -108,27 +77,12 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   ) async {
     emit(CalendarLoading());
     try {
-      if (_googleSignIn.currentUser != null && _calendarApi != null) {
+      if (_googleCalendarRepository.isAuthenticated) {
         final now = DateTime.now();
         final sevenDaysLater = now.add(const Duration(days: 7));
 
-        final events = await _calendarApi!.events.list(
-          'primary',
-          timeMin: now.toUtc(),
-          timeMax: sevenDaysLater.toUtc(),
-          singleEvents: true,
-          orderBy: 'startTime',
-        );
-
-        final calendarEvents = events.items
-                ?.map((e) => model_event.CalendarEventModel(
-                      id: e.id ?? '',
-                      title: e.summary ?? 'No Title',
-                      start: e.start?.dateTime ?? DateTime.now(),
-                      end: e.end?.dateTime ?? DateTime.now(),
-                    ))
-                .toList() ??
-            [];
+        final calendarEvents =
+            await _googleCalendarRepository.getEvents(now, sevenDaysLater);
         emit(CalendarEventsLoaded(events: calendarEvents));
       } else if (localCalendarService != null) {
         final localEvents = await localCalendarService!.getEvents();
