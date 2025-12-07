@@ -5,21 +5,29 @@ import 'package:time_gem/ui/screens/welcome/widgets/time_range_widget.dart';
 import 'package:time_gem/ui/screens/welcome/widgets/welcome_widget.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+  final int initialPage;
+  const WelcomeScreen({super.key, this.initialPage = 0});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  final PageController _pageController = PageController();
+  late final PageController _pageController;
   final List<Widget> _pages = const [
     WelcomeWidget(),
     IntroWidget(),
     TimeRangeWidget(),
     CalendarIntegrationWidget(),
   ];
-  int _currentPage = 0;
+  late int _currentPage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPage = widget.initialPage;
+    _pageController = PageController(initialPage: widget.initialPage);
+  }
 
   @override
   void dispose() {
