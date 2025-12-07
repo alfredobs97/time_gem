@@ -15,6 +15,19 @@ class GoogleCalendarService {
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
+    return _authenticateAndInit(googleUser);
+  }
+
+  Future<GoogleSignInAccount?> restoreSession() async {
+    final GoogleSignInAccount? googleUser =
+        await _googleSignIn.signInSilently();
+    if (googleUser == null) return null;
+
+    return _authenticateAndInit(googleUser);
+  }
+
+  Future<GoogleSignInAccount?> _authenticateAndInit(
+      GoogleSignInAccount googleUser) async {
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
     final AuthCredential credential = GoogleAuthProvider.credential(
@@ -22,7 +35,10 @@ class GoogleCalendarService {
       idToken: googleAuth.idToken,
     );
 
-    await FirebaseAuth.instance.signInWithCredential(credential);
+    // Only sign in if not already signed in
+    if (FirebaseAuth.instance.currentUser == null) {
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    }
 
     final hasPermissions = await _googleSignIn.requestScopes([
       'https://www.googleapis.com/auth/calendar.readonly',
