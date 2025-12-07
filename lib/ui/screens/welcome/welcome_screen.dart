@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:time_gem/ui/screens/welcome/widgets/intro_widget.dart';
 import 'package:time_gem/ui/screens/welcome/widgets/calendar_integration_widget.dart';
+import 'package:time_gem/ui/screens/welcome/widgets/time_range_widget.dart';
 import 'package:time_gem/ui/screens/welcome/widgets/welcome_widget.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final List<Widget> _pages = const [
     WelcomeWidget(),
     IntroWidget(),
+    TimeRangeWidget(),
     CalendarIntegrationWidget(),
   ];
   int _currentPage = 0;
