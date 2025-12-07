@@ -43,6 +43,22 @@ class GoogleCalendarService {
     _calendarApi = null;
   }
 
+  Future<void> insertEvent(CalendarEventModel event) async {
+    if (_calendarApi == null) return;
+
+    final googleEvent = google_calendar.Event(
+      summary: event.title,
+      start: google_calendar.EventDateTime(
+        dateTime: event.start.toUtc(),
+      ),
+      end: google_calendar.EventDateTime(
+        dateTime: event.end.toUtc(),
+      ),
+    );
+
+    await _calendarApi!.events.insert(googleEvent, 'primary');
+  }
+
   Future<List<CalendarEventModel>> getEvents(
     DateTime start,
     DateTime end,
