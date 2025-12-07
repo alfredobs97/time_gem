@@ -33,7 +33,10 @@ class TaskService {
     _notifyListeners();
   }
 
-  Future<void> moveTaskToCalendar() async {
+  Future<void> moveTaskToCalendar(List<Task> tasks) async {
+    for (final task in tasks) {
+      deleteTask(task.id);
+    }
     _organizationCompleteController.add(null);
   }
 
