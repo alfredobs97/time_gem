@@ -17,15 +17,10 @@ Built with 💙 using **Flutter** and **Google's Antigravity**.
 
 ## 🎥 Look Inside
 
-### 1. The Onboarding Experience
-See how Time Gem learns about your preferences and connects to your digital life.
-
-[Insert Onboarding Video Here]
-
-### 2. Time Gem in Action
-Watch Gemini 3 organize a chaotic to-do list into a perfectly structured day.
-
-[Insert App Demo Video Here]
+| 1. The Onboarding Experience | 2. Time Gem in Action |
+| :---: | :---: |
+| See how Time Gem learns about your preferences and connects to your digital life. | Watch Gemini 3 organize a chaotic to-do list into a perfectly structured day. |
+| <img src="./readme_assets/onboarding.gif" width="400"/> | <img src="./readme_assets/app.gif" width="400"/> |
 
 ---
 
