@@ -2,7 +2,8 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:time_gem/data/services/google_calendar_service.dart';
 import 'package:time_gem/data/services/local_calendar_service.dart';
-import 'package:time_gem/models/calendar_event_model.dart' as model_event;
+import 'package:time_gem/domain/models/calendar_event_model.dart'
+    as model_event;
 import 'dart:async';
 import 'package:time_gem/data/services/task_service.dart';
 

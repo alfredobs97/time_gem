@@ -1,21 +1,28 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:time_gem/domain/services/ai_service.dart';
-import 'package:time_gem/models/task_model.dart';
-import 'package:time_gem/models/working_hours.dart';
-import 'package:time_gem/task_bloc/task_event.dart';
-import 'package:time_gem/task_bloc/task_state.dart';
+import 'package:time_gem/domain/models/task_model.dart';
+import 'package:time_gem/domain/models/working_hours.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_event.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_state.dart';
 
 import 'dart:async';
 import 'package:time_gem/data/services/task_service.dart';
+import 'package:time_gem/data/services/storage_service.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskService _taskService;
   final AIService _aiService;
+  final StorageService _storageService;
   late StreamSubscription<List<Task>> _tasksSubscription;
 
-  TaskBloc({required TaskService taskService, required AIService aiService})
-      : _taskService = taskService,
+  TaskBloc({
+    required TaskService taskService,
+    required AIService aiService,
+    required StorageService storageService,
+  })  : _taskService = taskService,
         _aiService = aiService,
+        _storageService = storageService,
         super(const TaskLoaded()) {
     on<LoadTasks>(_onLoadTasks);
     on<AddTask>(_onAddTask);
@@ -39,16 +46,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   }
 
   void _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) {
-    // Initial load from service
     emit(TaskLoaded(tasks: _taskService.tasks));
+    _workingHours = WorkingHours(
+        startTime: TimeOfDay.fromDateTime(_storageService.startTime!),
+        endTime: TimeOfDay.fromDateTime(_storageService.endTime!));
   }
 
   void _onTasksUpdated(TasksUpdated event, Emitter<TaskState> emit) {
-    if (state is TaskLoaded) {
-      emit((state as TaskLoaded).copyWith(tasks: event.tasks));
-    } else {
-      emit(TaskLoaded(tasks: event.tasks));
-    }
+    emit(TaskLoaded(tasks: event.tasks));
   }
 
   void _onAddTask(AddTask event, Emitter<TaskState> emit) {
@@ -71,9 +76,24 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           organizationStatus: OrganizationStatus.loading));
 
       try {
-        await _aiService.organizeTasks(_taskService.tasks, _workingHours!);
+        if (currentState.readyToOrganizeTasks.isEmpty) {
+          emit(currentState.copyWith(
+              organizationStatus: OrganizationStatus.empty));
+          return;
+        }
+        final createdEvents = await _aiService.organizeTasks(
+          currentState.readyToOrganizeTasks,
+          _workingHours!,
+        );
+        await _taskService
+            .moveTaskToCalendar(currentState.readyToOrganizeTasks);
         emit(currentState.copyWith(
-            organizationStatus: OrganizationStatus.success));
+          organizationStatus: OrganizationStatus.success,
+          lastOrganizedEvents: createdEvents,
+        ));
+
+        emit(currentState.copyWith(
+            organizationStatus: OrganizationStatus.initial));
       } catch (e) {
         emit(currentState.copyWith(
             organizationStatus: OrganizationStatus.failure));
@@ -84,5 +104,13 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   void _onSetTimeRange(SetTimeRange event, Emitter<TaskState> emit) {
     _workingHours =
         WorkingHours(startTime: event.startTime, endTime: event.endTime);
+
+    final now = DateTime.now();
+    final startDateTime = DateTime(now.year, now.month, now.day,
+        event.startTime.hour, event.startTime.minute);
+    final endDateTime = DateTime(
+        now.year, now.month, now.day, event.endTime.hour, event.endTime.minute);
+
+    _storageService.saveUserPreferences(start: startDateTime, end: endDateTime);
   }
 }

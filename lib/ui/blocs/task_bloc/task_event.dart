@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:time_gem/models/task_model.dart';
+import 'package:time_gem/domain/models/task_model.dart';
 
 abstract class TaskEvent extends Equatable {
   const TaskEvent();
