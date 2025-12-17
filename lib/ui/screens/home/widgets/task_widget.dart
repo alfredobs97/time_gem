@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:time_gem/models/task_model.dart';
-import 'package:time_gem/task_bloc/task_bloc.dart';
-import 'package:time_gem/task_bloc/task_event.dart';
-import 'package:time_gem/task_bloc/task_state.dart';
+import 'package:time_gem/domain/models/task_model.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_bloc.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_event.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_state.dart';
+import 'package:time_gem/ui/screens/home/widgets/add_task_bottom_sheet.dart';
+import 'package:time_gem/ui/screens/home/widgets/task_tile_widget.dart';
 
 class TaskWidget extends StatelessWidget {
   const TaskWidget({super.key});
@@ -11,331 +13,274 @@ class TaskWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showTaskDialog(context);
-        },
-        child: const Icon(Icons.add),
-      ),
-      body: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: BlocListener<TaskBloc, TaskState>(
-          listener: (context, state) {
-            switch (state) {
-              case TaskLoaded state
-                  when state.organizationStatus == OrganizationStatus.success:
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Tasks Organized!'),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                  ),
-                );
-                break;
-              case TaskLoaded state
-                  when state.organizationStatus == OrganizationStatus.failure:
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to organize tasks.'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
-                break;
-              default:
-                break;
-            }
-          },
-          child: BlocBuilder<TaskBloc, TaskState>(
-            builder: (context, state) {
-              if (state is TaskLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is TaskLoaded) {
-                return Column(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          // Drafts Column
-                          Expanded(
-                            child: DragTarget<Task>(
-                              onAcceptWithDetails: (details) {
-                                context.read<TaskBloc>().add(
-                                      UpdateTask(
-                                        details.data
-                                            .copyWith(isReadyToSchedule: false),
-                                      ),
-                                    );
-                              },
-                              builder: (context, candidateData, rejectedData) {
-                                return Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Drafts',
+      body: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: Column(
+              children: [
+                // Task sections
+                Expanded(
+                  child: BlocListener<TaskBloc, TaskState>(
+                    listener: (context, state) {
+                      switch (state) {
+                        case TaskLoaded state
+                            when state.organizationStatus ==
+                                OrganizationStatus.success:
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Tasks Organized!'),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                            ),
+                          );
+                          break;
+                        case TaskLoaded state
+                            when state.organizationStatus ==
+                                OrganizationStatus.failure:
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to organize tasks.'),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          break;
+                        default:
+                          break;
+                      }
+                    },
+                    child: BlocBuilder<TaskBloc, TaskState>(
+                      builder: (context, state) {
+                        if (state is TaskLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (state is TaskLoaded) {
+                          final draftTasks = state.tasks
+                              .where((t) => !t.isReadyToSchedule)
+                              .toList();
+                          final readyTasks = state.tasks
+                              .where((t) => t.isReadyToSchedule)
+                              .toList();
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Draft Tasks Section
+                                      Text(
+                                        'Draft Tasks',
                                         style: Theme.of(context)
                                             .textTheme
-                                            .titleMedium,
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: _buildTaskList(
-                                        context,
-                                        state.tasks
-                                            .where((t) => !t.isReadyToSchedule)
-                                            .toList(),
-                                        isDraft: true,
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                          const VerticalDivider(width: 1),
-                          // Ready to Schedule Column
-                          Expanded(
-                            child: DragTarget<Task>(
-                              onAccept: (task) {
-                                context.read<TaskBloc>().add(
-                                      UpdateTask(
-                                        task.copyWith(isReadyToSchedule: true),
-                                      ),
-                                    );
-                              },
-                              builder: (context, candidateData, rejectedData) {
-                                return Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
+                                      const SizedBox(height: 8),
+                                      if (draftTasks.isEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 16),
+                                          child: Text(
+                                            'No draft tasks',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                          ),
+                                        )
+                                      else
+                                        ...draftTasks
+                                            .map((task) => TaskTileWidget(
+                                                  task: task,
+                                                )),
+                                      const SizedBox(height: 24),
+                                      // Ready to Schedule Section
+                                      Text(
                                         'Ready to Schedule',
                                         style: Theme.of(context)
                                             .textTheme
-                                            .titleMedium,
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (readyTasks.isEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 16),
+                                          child: Text(
+                                            'No tasks ready to schedule',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                          ),
+                                        )
+                                      else
+                                        ...readyTasks
+                                            .map((task) => TaskTileWidget(
+                                                  task: task,
+                                                )),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Bottom section with info text and Schedule button
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                        horizontal: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest
+                                            .withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Text(
+                                        "Only tasks marked 'Ready to Schedule' will be processed by the AI.",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                    Expanded(
-                                      child: _buildTaskList(
-                                        context,
-                                        state.tasks
-                                            .where((t) => t.isReadyToSchedule)
-                                            .toList(),
-                                        isDraft: false,
-                                      ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton.icon(
+                                            onPressed: () {
+                                              context
+                                                  .read<TaskBloc>()
+                                                  .add(OrganizeTasks());
+                                            },
+                                            icon:
+                                                const Icon(Icons.auto_awesome),
+                                            label:
+                                                const Text('Schedule with AI'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              foregroundColor: Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 16),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(28),
+                                              ),
+                                              textStyle: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHighest,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: IconButton(
+                                            onPressed: () {
+                                              _showTaskDialog(context);
+                                            },
+                                            icon: const Icon(Icons.add),
+                                            padding: const EdgeInsets.all(12),
+                                            tooltip: 'Add Task',
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else if (state is TaskError) {
+                          return Center(child: Text(state.message));
+                        }
+                        return const SizedBox.shrink();
+                      },
                     ),
-                  ],
-                );
-              } else if (state is TaskError) {
-                return Center(child: Text(state.message));
-              }
-              return const SizedBox.shrink();
-            },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTaskList(BuildContext context, List<Task> tasks,
-      {required bool isDraft}) {
-    if (tasks.isEmpty) {
-      return const Center(child: Text('No tasks'));
-    }
-    return ListView.builder(
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
-        final task = tasks[index];
-        return Card(
-          color: _getPriorityColor(context, task.priority),
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: InkWell(
-            onLongPress: () => _showTaskDialog(context, task: task),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.title,
-                    style: TextStyle(
-                      decoration:
-                          task.isCompleted ? TextDecoration.lineThrough : null,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: task.isCompleted,
-                        onChanged: (value) {
-                          context.read<TaskBloc>().add(
-                                UpdateTask(
-                                  task.copyWith(isCompleted: value),
-                                ),
-                              );
-                        },
-                      ),
-                      const Spacer(),
-                      if (isDraft)
-                        IconButton(
-                          icon: const Icon(Icons.arrow_forward, size: 20),
-                          onPressed: () {
-                            context.read<TaskBloc>().add(
-                                  UpdateTask(
-                                    task.copyWith(isReadyToSchedule: true),
-                                  ),
-                                );
-                          },
-                        )
-                      else
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, size: 20),
-                          onPressed: () {
-                            context.read<TaskBloc>().add(
-                                  UpdateTask(
-                                    task.copyWith(isReadyToSchedule: false),
-                                  ),
-                                );
-                          },
-                        ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, size: 20),
-                        onPressed: () {
-                          context.read<TaskBloc>().add(DeleteTask(task.id));
-                        },
-                      ),
-                      Draggable<Task>(
-                        data: task,
-                        feedback: Material(
-                          elevation: 4.0,
-                          child: SizedBox(
-                            width: 200,
-                            child: Card(
-                              color: _getPriorityColor(context, task.priority),
-                              child: ListTile(
-                                title: Text(task.title),
-                              ),
-                            ),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Icon(Icons.drag_indicator,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Color _getPriorityColor(BuildContext context, TaskPriority priority) {
-    final colorScheme = Theme.of(context).colorScheme;
-    switch (priority) {
-      case TaskPriority.high:
-        return colorScheme.errorContainer;
-      case TaskPriority.medium:
-        return colorScheme.tertiaryContainer;
-      case TaskPriority.low:
-        return colorScheme.secondaryContainer;
-    }
-  }
-
   void _showTaskDialog(BuildContext context, {Task? task}) {
-    final TextEditingController controller =
-        TextEditingController(text: task?.title ?? '');
-    TaskPriority selectedPriority = task?.priority ?? TaskPriority.medium;
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(task == null ? 'Add Task' : 'Edit Task'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: controller,
-                    decoration:
-                        const InputDecoration(hintText: 'Enter task title'),
-                    autofocus: true,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButton<TaskPriority>(
-                    value: selectedPriority,
-                    isExpanded: true,
-                    items: TaskPriority.values.map((priority) {
-                      return DropdownMenuItem(
-                        value: priority,
-                        child: Text(priority.name.toUpperCase()),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          selectedPriority = value;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (controller.text.isNotEmpty) {
-                      if (task == null) {
-                        context.read<TaskBloc>().add(
-                              AddTask(
-                                Task(
-                                  title: controller.text,
-                                  priority: selectedPriority,
-                                ),
-                              ),
-                            );
-                      } else {
-                        context.read<TaskBloc>().add(
-                              UpdateTask(
-                                task.copyWith(
-                                  title: controller.text,
-                                  priority: selectedPriority,
-                                ),
-                              ),
-                            );
-                      }
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  child: Text(task == null ? 'Add' : 'Save'),
-                ),
-              ],
-            );
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return AddTaskBottomSheet(
+          task: task,
+          onSave: (title, priority) {
+            if (task == null) {
+              context.read<TaskBloc>().add(
+                    AddTask(
+                      Task(
+                        title: title,
+                        priority: priority,
+                      ),
+                    ),
+                  );
+            } else {
+              context.read<TaskBloc>().add(
+                    UpdateTask(
+                      task.copyWith(
+                        title: title,
+                        priority: priority,
+                      ),
+                    ),
+                  );
+            }
           },
         );
       },

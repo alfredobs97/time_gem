@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
+import 'package:time_gem/ui/blocs/calendar_bloc/calendar_bloc.dart';
 import 'package:calendar_view/calendar_view.dart';
-import 'package:time_gem/models/calendar_event_model.dart';
-import 'package:time_gem/task_bloc/task_bloc.dart';
-import 'package:time_gem/task_bloc/task_event.dart';
+import 'package:time_gem/domain/models/calendar_event_model.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_bloc.dart';
 import 'package:time_gem/ui/screens/home/widgets/ai_events_overview.dart';
 import 'package:time_gem/ui/screens/home/widgets/calendar_widget.dart';
-import 'package:time_gem/task_bloc/task_state.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_state.dart';
 import 'package:time_gem/ui/screens/home/widgets/task_widget.dart';
+import 'package:time_gem/ui/screens/tasks/task_screen.dart';
+import 'package:time_gem/ui/screens/welcome/welcome_screen.dart';
 import 'package:time_gem/ui/widgets/ai_loading_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,14 +20,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  double _calendarHeight = 400; // Initial height
-  bool _isFullScreenMode = true;
-  int _currentViewIndex = 0;
-
-  String _getAppBarTitle() {
-    if (!_isFullScreenMode) return 'time_gem';
-    return _currentViewIndex == 0 ? 'Calendar' : 'Task';
+  @override
+  void initState() {
+    super.initState();
+    // Automatically fetch calendar events when HomeScreen loads
+    context.read<CalendarBloc>().add(FetchCalendarEvents());
   }
+
+  double _calendarHeight = 400; // Initial height
 
   Color _getEventColor(CalendarEventModel event) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -43,32 +44,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _getAppBarTitle(),
+          'Time Gem',
           style:
               Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22),
         ),
         actions: [
           IconButton(
-            icon: Icon(
-                _isFullScreenMode ? Icons.view_agenda : Icons.view_carousel),
-            tooltip: _isFullScreenMode ? 'Split View' : 'Full Screen',
+            icon: const Icon(Icons.list_alt),
+            tooltip: 'Tasks',
             onPressed: () {
-              setState(() {
-                _isFullScreenMode = !_isFullScreenMode;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.auto_awesome),
-            tooltip: 'Organize Tasks',
-            onPressed: () {
-              context.read<TaskBloc>().add(OrganizeTasks());
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const TaskScreen(),
+                ),
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<CalendarBloc>().add(SignOutRequested());
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (context) => const WelcomeScreen(),
+                ),
+                (route) => false,
+              );
             },
           ),
         ],
@@ -107,20 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: _getEventColor(e),
                           ))
                       .toList();
-
-                  if (_isFullScreenMode) {
-                    return PageView(
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentViewIndex = index;
-                        });
-                      },
-                      children: [
-                        CalendarWidget(events: events),
-                        TaskWidget(),
-                      ],
-                    );
-                  }
 
                   return Column(
                     children: [

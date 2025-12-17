@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:time_gem/session_bloc/session_bloc.dart';
-import 'package:time_gem/session_bloc/session_state.dart';
+import 'package:time_gem/ui/blocs/session_bloc/session_bloc.dart';
+import 'package:time_gem/ui/blocs/session_bloc/session_state.dart';
 import 'package:time_gem/ui/screens/home/home_screen.dart';
 import 'package:time_gem/ui/screens/welcome/welcome_screen.dart';
 
