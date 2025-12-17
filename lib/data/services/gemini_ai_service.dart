@@ -2,9 +2,9 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:time_gem/data/services/google_calendar_service.dart';
 import 'package:time_gem/domain/services/ai_service.dart';
-import 'package:time_gem/models/calendar_event_model.dart';
-import 'package:time_gem/models/task_model.dart';
-import 'package:time_gem/models/working_hours.dart';
+import 'package:time_gem/domain/models/calendar_event_model.dart';
+import 'package:time_gem/domain/models/task_model.dart';
+import 'package:time_gem/domain/models/working_hours.dart';
 
 class GeminiAIService implements AIService {
   late final GenerativeModel _model;
@@ -16,7 +16,7 @@ class GeminiAIService implements AIService {
     required GoogleCalendarService googleCalendarRepository,
   }) : _googleCalendarRepository = googleCalendarRepository {
     _model = FirebaseAI.googleAI().generativeModel(
-      model: 'gemini-flash-latest',
+      model: 'gemini-3-flash',
       tools: [
         Tool.functionDeclarations([
           FunctionDeclaration(
@@ -96,6 +96,7 @@ class GeminiAIService implements AIService {
                 functionCall.name,
                 {'status': 'success', 'message': 'Event created'},
               ));
+              createdEvents.add(event);
               debugPrint('Event created: $event');
             } catch (e) {
               debugPrint('Error creating event: $e');
