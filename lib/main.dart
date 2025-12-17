@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
+import 'package:time_gem/ui/blocs/calendar_bloc/calendar_bloc.dart';
 import 'package:calendar_view/calendar_view.dart';
 import 'package:time_gem/data/services/local_calendar_service.dart';
-import 'package:time_gem/task_bloc/task_bloc.dart';
-import 'package:time_gem/task_bloc/task_event.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_bloc.dart';
+import 'package:time_gem/ui/blocs/task_bloc/task_event.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:time_gem/firebase_options.dart';
@@ -14,8 +14,8 @@ import 'package:time_gem/data/services/google_calendar_service.dart';
 import 'package:time_gem/data/services/task_service.dart';
 import 'package:time_gem/data/services/gemini_ai_service.dart';
 import 'package:time_gem/ui/theme/app_theme.dart';
-import 'package:time_gem/session_bloc/session_bloc.dart';
-import 'package:time_gem/session_bloc/session_event.dart';
+import 'package:time_gem/ui/blocs/session_bloc/session_bloc.dart';
+import 'package:time_gem/ui/blocs/session_bloc/session_event.dart';
 
 import 'package:time_gem/data/services/storage_service.dart';
 import 'package:time_gem/ui/screens/splash/splash_screen.dart';
