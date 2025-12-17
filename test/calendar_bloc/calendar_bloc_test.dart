@@ -5,18 +5,21 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
-import 'package:time_gem/calendar_bloc/calendar_bloc.dart';
-import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
+import 'package:time_gem/ui/blocs/calendar_bloc/calendar_bloc.dart';
+import 'package:time_gem/ui/blocs/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
 
 import 'calendar_bloc_test.mocks.dart';
 
-// Generate mocks for GoogleSignIn, GoogleSignInAccount, and calendar.CalendarApi
+import 'package:time_gem/data/services/task_service.dart';
+
+// Generate mocks for GoogleSignIn, GoogleSignInAccount, calendar.CalendarApi, and TaskService
 @GenerateMocks([
   GoogleSignIn,
   GoogleSignInAccount,
   auth.AuthClient,
   calendar.CalendarApi,
   calendar.EventsResource,
+  TaskService,
 ])
 void main() {
   group('CalendarBloc', () {
@@ -25,6 +28,7 @@ void main() {
     late MockAuthClient mockAuthClient;
     late MockCalendarApi mockCalendarApi;
     late MockEventsResource mockEventsResource;
+    late MockTaskService mockTaskService;
 
     setUp(() {
       mockGoogleSignIn = MockGoogleSignIn();
@@ -32,6 +36,7 @@ void main() {
       mockAuthClient = MockAuthClient();
       mockCalendarApi = MockCalendarApi();
       mockEventsResource = MockEventsResource();
+      mockTaskService = MockTaskService();
 
       when(mockGoogleSignIn.currentUser).thenReturn(null);
       when(mockGoogleSignIn.onCurrentUserChanged)
@@ -42,7 +47,7 @@ void main() {
           .thenAnswer((_) async => mockGoogleSignInAccount);
       when(mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
 
-     /*  when(mockGoogleSignInAccount.authentication)
+      /*  when(mockGoogleSignInAccount.authentication)
           .thenAnswer((_) async => GoogleSignInAuthentication(
                 accessToken: 'mock_access_token', // Provide a non-null value for accessToken
                 idToken: 'mock_id_token', // Provide a non-null value for idToken
@@ -57,6 +62,9 @@ void main() {
       when(mockAuthClient.close()).thenReturn(null);
 
       when(mockCalendarApi.events).thenReturn(mockEventsResource);
+
+      when(mockTaskService.organizationCompleteStream)
+          .thenAnswer((_) => Stream.empty());
     });
 
     blocTest<CalendarBloc, CalendarState>(
@@ -64,7 +72,8 @@ void main() {
       build: () {
         when(mockGoogleSignIn.currentUser)
             .thenAnswer((_) => mockGoogleSignInAccount);
-        return CalendarBloc(googleSignIn: mockGoogleSignIn);
+        return CalendarBloc(
+            googleSignIn: mockGoogleSignIn, taskService: mockTaskService);
       },
       act: (bloc) => bloc.add(SignInWithGoogleRequested()),
       expect: () => [
@@ -75,7 +84,8 @@ void main() {
 
     blocTest<CalendarBloc, CalendarState>(
       'emits [CalendarLoading, CalendarAuthenticated] when Google Sign-In is successful after user interaction',
-      build: () => CalendarBloc(googleSignIn: mockGoogleSignIn),
+      build: () => CalendarBloc(
+          googleSignIn: mockGoogleSignIn, taskService: mockTaskService),
       act: (bloc) => bloc.add(SignInWithGoogleRequested()),
       expect: () => [
         CalendarLoading(),
@@ -88,7 +98,8 @@ void main() {
       build: () {
         when(mockGoogleSignIn.currentUser)
             .thenAnswer((_) => mockGoogleSignInAccount);
-        return CalendarBloc(googleSignIn: mockGoogleSignIn);
+        return CalendarBloc(
+            googleSignIn: mockGoogleSignIn, taskService: mockTaskService);
       },
       act: (bloc) => bloc.add(SignOutRequested()),
       expect: () => [
@@ -104,9 +115,15 @@ void main() {
             .thenAnswer((_) => mockGoogleSignInAccount);
         when(mockEventsResource.list(
           'primary',
+          timeMin: anyNamed('timeMin'),
+          timeMax: anyNamed('timeMax'),
+          singleEvents: anyNamed('singleEvents'),
+          orderBy: anyNamed('orderBy'),
         )).thenAnswer((_) async => calendar.Events(items: []));
         return CalendarBloc(
-            googleSignIn: mockGoogleSignIn, calendarApi: mockCalendarApi);
+            googleSignIn: mockGoogleSignIn,
+            calendarApi: mockCalendarApi,
+            taskService: mockTaskService);
       },
       act: (bloc) => bloc.add(FetchCalendarEvents()),
       expect: () => [
@@ -120,7 +137,8 @@ void main() {
       build: () {
         when(mockGoogleSignIn.signInSilently())
             .thenThrow(Exception('Sign-in failed'));
-        return CalendarBloc(googleSignIn: mockGoogleSignIn);
+        return CalendarBloc(
+            googleSignIn: mockGoogleSignIn, taskService: mockTaskService);
       },
       act: (bloc) => bloc.add(SignInWithGoogleRequested()),
       expect: () => [
@@ -136,9 +154,15 @@ void main() {
             .thenAnswer((_) => mockGoogleSignInAccount);
         when(mockEventsResource.list(
           'primary',
+          timeMin: anyNamed('timeMin'),
+          timeMax: anyNamed('timeMax'),
+          singleEvents: anyNamed('singleEvents'),
+          orderBy: anyNamed('orderBy'),
         )).thenThrow(Exception('Failed to fetch events'));
         return CalendarBloc(
-            googleSignIn: mockGoogleSignIn, calendarApi: mockCalendarApi);
+            googleSignIn: mockGoogleSignIn,
+            calendarApi: mockCalendarApi,
+            taskService: mockTaskService);
       },
       act: (bloc) => bloc.add(FetchCalendarEvents()),
       expect: () => [

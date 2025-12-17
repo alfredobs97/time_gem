@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:time_gem/models/calendar_event_model.dart';
+import 'package:time_gem/domain/models/calendar_event_model.dart';
 import 'package:time_gem/ui/screens/home/widgets/event_details.dart'
     show EventDetails;
 

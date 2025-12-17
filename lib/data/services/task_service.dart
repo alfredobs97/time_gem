@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:time_gem/models/task_model.dart';
+import 'package:time_gem/domain/models/task_model.dart';
 
 class TaskService {
   final List<Task> _tasks = [];

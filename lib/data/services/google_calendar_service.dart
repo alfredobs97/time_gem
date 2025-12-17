@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as google_calendar;
-import 'package:time_gem/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
-import 'package:time_gem/models/calendar_event_model.dart';
+import 'package:time_gem/ui/blocs/calendar_bloc/extension_google_sign_in_as_googleapis_auth.dart';
+import 'package:time_gem/domain/models/calendar_event_model.dart';
 
 class GoogleCalendarService {
   final GoogleSignIn _googleSignIn;
@@ -60,7 +60,7 @@ class GoogleCalendarService {
   }
 
   Future<void> insertEvent(CalendarEventModel event) async {
-    if (_calendarApi == null) return;
+    if (_calendarApi == null) await restoreSession();
 
     final googleEvent = google_calendar.Event(
       summary: event.title,
