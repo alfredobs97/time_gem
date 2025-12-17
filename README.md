@@ -40,7 +40,7 @@ Want to run Time Gem on your own device? Follow these steps to set up your envir
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/time_gem.git
+git clone https://github.com/alfredobs97/time_gem.git
 cd time_gem
 ```
 
